@@ -1,0 +1,74 @@
+Summary:	Confd is a lightweight configuration management tool
+Name:		NAME
+Version:	VERS
+Release:	RELEASE
+License:	MIT
+Source:		rpm/SOURCES/%{name}-%{version}.tar.gz
+BuildArch:	x86_64
+
+%description
+confd is a lightweight configuration management tool focused on:
+    - keeping local configuration files up-to-date using data stored in etcd,
+    consul, dynamodb, redis, vault, zookeeper or env vars and processing
+    template resources.
+    - Reloading applications to pick up new config file
+    changes
+
+
+%prep
+%setup -q
+
+%build
+
+%install
+rm -fr %{buildroot}
+mkdir -p %{buildroot}/usr/bin/
+mkdir -p %{buildroot}/usr/share/doc/%{name}-%{version}
+mkdir -p %{buildroot}/usr/lib/systemd/system
+mkdir -p %{buildroot}/etc/confd/conf.d
+mkdir -p %{buildroot}/etc/confd/templates
+cp ./confd-%{version}-linux-amd64 %{buildroot}/usr/bin/confd
+cp ./confd.service %{buildroot}/usr/lib/systemd/system/confd.service
+cp ./LICENSE %{buildroot}/usr/share/doc/%{name}-%{version}/
+>%{buildroot}/etc/confd/confd.toml
+
+%clean
+rm -fr %{buildroot}
+
+%files
+%defattr(-, root, root, -)
+%attr(755, root, root) /usr/bin/confd
+%attr(644, root, root) /usr/lib/systemd/system/confd.service
+%dir /etc/confd
+%dir /etc/confd/templates
+%dir /etc/confd/conf.d
+%doc /usr/share/doc/%{name}-%{version}
+%config(noreplace) /etc/confd/confd.toml
+
+%post
+if [ $1 -eq 1 ] ; then 
+        # Initial installation 
+        systemctl preset confd.service >/dev/null 2>&1 || : 
+fi
+
+%preun
+if [ $1 -eq 0 ] ; then 
+        # Package removal, not upgrade 
+        systemctl --no-reload disable confd.service > /dev/null 2>&1 || : 
+        systemctl stop confd.service > /dev/null 2>&1 || : 
+fi
+
+%postun
+systemctl daemon-reload >/dev/null 2>&1 || : 
+
+%changelog
+* Fri Jun 30 2017 <Stanley.Zhang@alcatel-lucent.com> 0.12.1-2
+- Delete the dependency to etcd.client.conf from confd.service
+* Thu Dec 29 2016 <Stanley.Zhang@alcatel-lucent.com> 0.12.1-1
+- upgrade confd to v0.12.1
+* Wed Aug 31 2016 <Mike.Norton@nokia.com> 0.11.0-3
+- Added systemd service script
+* Wed Aug 03 2016 <Mike.Norton@nokia.com> 0.11.0-2
+- Added documentation link
+* Tue Jul 05 2016 <Mike.Norton@nokia.com> 0.11.0-1
+- initial release

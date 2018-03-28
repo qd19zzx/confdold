@@ -1,0 +1,4 @@
+name = confd
+version = 0.14.1
+release = 3
+platform = x86_64

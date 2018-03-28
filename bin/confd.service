@@ -1,0 +1,15 @@
+[Unit]
+Description=Configuration Management Tool
+After=network.target
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/confd
+Restart=always
+StartLimitBurst=10
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target
